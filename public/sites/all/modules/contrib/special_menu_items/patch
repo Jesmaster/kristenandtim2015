@@ -1,0 +1,119 @@
+diff --git a/special_menu_items.module b/special_menu_items.module
+index 7035d9b..5a7271e 100644
+--- a/special_menu_items.module
++++ b/special_menu_items.module
+@@ -28,6 +28,12 @@ function special_menu_items_menu() {
+     'type' => MENU_CALLBACK,
+   );
+ 
++  $items['<anchor>'] = array(
++    'page callback' => 'drupal_not_found',
++    'access callback' => TRUE,
++    'type' => MENU_CALLBACK,
++  );
++
+   $items['admin/config/system/special_menu_items'] = array(
+     'title' => 'Special Menu Items',
+     'description' => 'Configure Special Menu Items.',
+@@ -72,6 +78,11 @@ function special_menu_items_link(array $variables) {
+ 
+     return special_menu_items_render_menu_item($tag, $title, $attributes);
+   }
++  elseif ($variables['path'] == '<anchor>') {
++    $variables['options']['attributes']['class'][] = 'anchor';
++    // The path will be empty and we will just have an anchor.
++    $variables['path'] = '';
++  }
+   // Call the original theme function for normal menu link.
+   return theme('special_menu_items_link_default', $variables);
+ }
+@@ -116,6 +127,7 @@ function special_menu_items_theme_registry_alter(&$registry) {
+ function special_menu_items_form_menu_edit_item_alter(&$form, &$form_state) {
+  // Some menu items have a pre-defined path which cannot be modified hence no default_value
+  if (isset($form['link_path']['#default_value'])) {
++   $item = $form['original_item']['#value'];
+    $default_value = $form['link_path']['#default_value'];
+ 
+    if (preg_match('/^<nolink>\/[0-9]+$/', $default_value)) {
+@@ -124,12 +136,16 @@ function special_menu_items_form_menu_edit_item_alter(&$form, &$form_state) {
+    elseif (preg_match('/^<separator>\/[0-9]+$/', $default_value)) {
+      $default_value = '<separator>';
+    }
++   elseif (preg_match('/^<anchor>\#.+$/', $default_value)) {
++     $default_value = '<anchor>';
++   }
+ 
+    $form['link_path']['#default_value'] = $default_value;
+-   $form['link_path']['#description'] .=  ' ' . t('Enter "%nolink" to generate non-linkable item, enter "%separator" to generate separator item.', array('%nolink' => '<nolink>', '%separator' => '<separator>'));
++   $form['link_path']['#description'] .=  '<br />' . t('Enter "%anchor" to generate an anchor item, enter "%nolink" to generate non-linkable item, enter "%separator" to generate separator item.', array('%anchor' => '<anchor>', '%nolink' => '<nolink>', '%separator' => '<separator>'));
+ 
+     $type_options = array(
+       '' => t('Normal menu item'),
++      '<anchor>' => t('Anchor item'),
+       '<nolink>' => t('Non-link item'),
+       '<separator>' => t('Separator item'),
+     );
+@@ -152,6 +168,26 @@ function special_menu_items_form_menu_edit_item_alter(&$form, &$form_state) {
+     // If the field is visibe add the required indicator.
+     $form['link_path']['#states']['required']['select[name="menu_item_type"]'] = array('value' => '');
+ 
++    // Add an anchor field for the anchor type.
++    $form['fragment'] = array(
++      '#type' => 'textfield',
++      '#title' => t('Anchor'),
++      '#default_value' => isset($item['options']['fragment']) ? $item['options']['fragment'] : '',
++      '#weight' => -3,
++      '#description' => t('Enter the anchor without the leading #.'),
++      '#states' => array(
++        'visible' => array(
++          'select[name="menu_item_type"]' => array('value' => '<anchor>'),
++        ),
++        'required' => array(
++          'select[name="menu_item_type"]' => array('value' => '<anchor>'),
++        ),
++      ),
++    );
++
++    // Move the link title above the fragment.
++    $form['link_title']['#weight'] = -5;
++
+     // Add our validation function and run it first so that we get in early
+     // with the path field required check.
+     array_unshift($form['#validate'], 'special_menu_items_menu_edit_item_validate');
+@@ -165,6 +201,17 @@ function special_menu_items_menu_edit_item_validate(&$form, &$form_state) {
+   if ($form_state['values']['menu_item_type']) {
+     // If menu item type is not a normal item set the path for the type.
+     form_set_value($form['link_path'], $form_state['values']['menu_item_type'], $form_state);
++    // Handle the anchor type.
++    if ($form_state['values']['menu_item_type'] == '<anchor>') {
++      if (!$form_state['values']['fragment']) {
++        if (isset($form['fragment']['#title'])) {
++          form_error($form['fragment'], t('!name field is required.', array('!name' => $form['fragment']['#title'])));
++        }
++        else {
++          form_error($form['fragment']);
++        }
++      }
++    }
+   }
+   else {
+     // We have a normal menu item so we have to make sure we have a path.
+@@ -181,6 +228,18 @@ function special_menu_items_menu_edit_item_validate(&$form, &$form_state) {
+ }
+ 
+ /**
++ * Implements hook_menu_link_alter().
++ */
++function special_menu_items_menu_link_alter(&$item) {
++  // If we are saving an anchor with a fragment, save the fragment properly.
++  if ($item['link_path'] == '<anchor>') {
++    if (isset($item['menu_item_type']) && $item['menu_item_type'] == '<anchor>') {
++      $item['options']['fragment'] = $item['fragment'];
++    }
++  }
++}
++
++/**
+  * Implementation of hook_init().
+  */
+ function special_menu_items_init() {

@@ -1,0 +1,308 @@
+<?php
+
+/**
+ * @file
+ *  Module to enable placeholder or separator menu items.Placeholder is a menu item which is
+ *  actually not a link. Something like this is useful with drop down menus where we want to
+ *  have a parent link which is actually not linking to a page but which is just acting as a
+ *  parent and grouping some children below it.
+ *  A separator menu item is something like "-------" which is also not linking anywhere but
+ *  merely a mean to structure menus.
+ *
+ *  Written by Tamir Al Zoubi and Karim Djelid - Servit Open Source Solutions - www.servit.ch
+ */
+
+/**
+*Implementation of hook_menu()
+*/
+function special_menu_items_menu() {
+  $items['<nolink>'] = array(
+    'page callback' => 'drupal_not_found',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['<separator>'] = array(
+    'page callback' => 'drupal_not_found',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['<anchor>'] = array(
+    'page callback' => 'drupal_not_found',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['admin/config/system/special_menu_items'] = array(
+    'title' => 'Special Menu Items',
+    'description' => 'Configure Special Menu Items.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('special_menu_items_admin_settings_form'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+ return $items;
+}
+
+/**
+ * Override of theme_link()
+ * This function will render link if it is "nolink" or "separator". Otherwise it will call originally
+ * overwritten menu_item_link function.
+ */
+function special_menu_items_link(array $variables) {
+  if (in_array($variables['path'], array('<nolink>', '<separator>'))) {
+    switch ($variables['path']) {
+      case '<nolink>':
+        $tag = variable_get('special_menu_items_nolink_tag', '<span>');
+        $title = $variables['options']['html'] ? $variables['text'] : check_plain($variables['text']);
+        $variables['options']['attributes']['class'][] = 'nolink';
+        break;
+
+      case '<separator>':
+        $tag = variable_get('special_menu_items_separator_tag', '<span>');
+        $title = variable_get('special_menu_items_separator_value', '<hr>');
+        $variables['options']['attributes']['class'][] = 'separator';
+        break;
+    }
+
+    $attributes = drupal_attributes($variables['options']['attributes']);
+
+    if ($tag != '<a>') {
+      // <a> tags can have these but a <span> cannot, so we remove them.
+      foreach (array('accesskey', 'target', 'rel', 'name') as $attribute) {
+        $attributes = preg_replace("/ $attribute=\".*\"/i", "", $attributes);
+      }
+    }
+
+    return special_menu_items_render_menu_item($tag, $title, $attributes);
+  }
+  elseif ($variables['path'] == '<anchor>') {
+    $variables['options']['attributes']['class'][] = 'anchor';
+    // The path will be empty and we will just have an anchor.
+    $variables['path'] = '';
+  }
+  // Call the original theme function for normal menu link.
+  return theme('special_menu_items_link_default', $variables);
+}
+
+
+/**
+ * Returns menu item rendered.
+ */
+function special_menu_items_render_menu_item($tag, $value, $attrs = array()) {
+  // $attrs may be a string already or an array
+  if (is_array($attrs)) {
+    $attrs = drupal_attributes($attrs);
+  }
+  $length = strlen($tag);
+  if ($tag[0] == '<' && $tag[$length - 1] == '>') {
+    $tag = substr($tag, 1, $length-2);
+  }
+  $closingtag = explode(' ', $tag,2);
+  $closingtag = '</' . $closingtag[0] . '>';
+  $tag = '<' . $tag . $attrs . '>';
+
+  return $tag . $value . $closingtag;
+}
+
+
+
+
+/**
+ * Implementation of hook_theme_registry_alter()
+ * We replace theme_menu_item_link with our own function.
+ */
+function special_menu_items_theme_registry_alter(&$registry) {
+  // Save previous value from registry in case another theme overwrites menu_item_link
+  $registry['special_menu_items_link_default'] = $registry['link'];
+  $registry['link']['function'] = 'special_menu_items_link';
+}
+
+/**
+ * Implementation of hook_form_FROM_ID_alter()
+ * Description changed, added nolink and separator as path types.
+ */
+function special_menu_items_form_menu_edit_item_alter(&$form, &$form_state) {
+ // Some menu items have a pre-defined path which cannot be modified hence no default_value
+ if (isset($form['link_path']['#default_value'])) {
+   $item = $form['original_item']['#value'];
+   $default_value = $form['link_path']['#default_value'];
+
+   if (preg_match('/^<nolink>\/[0-9]+$/', $default_value)) {
+     $default_value = '<nolink>';
+   }
+   elseif (preg_match('/^<separator>\/[0-9]+$/', $default_value)) {
+     $default_value = '<separator>';
+   }
+   elseif (preg_match('/^<anchor>\#.+$/', $default_value)) {
+     $default_value = '<anchor>';
+   }
+
+   $form['link_path']['#default_value'] = $default_value;
+   $form['link_path']['#description'] .=  '<br />' . t('Enter "%anchor" to generate an anchor item, enter "%nolink" to generate non-linkable item, enter "%separator" to generate separator item.', array('%anchor' => '<anchor>', '%nolink' => '<nolink>', '%separator' => '<separator>'));
+
+    $type_options = array(
+      '' => t('Normal menu item'),
+      '<anchor>' => t('Anchor item'),
+      '<nolink>' => t('Non-link item'),
+      '<separator>' => t('Separator item'),
+    );
+    // Give users a more user friendly way of adding special menu items.
+    $form['menu_item_type'] = array(
+      '#type' => 'select',
+      '#title' => t('Menu item type'),
+      '#options' => $type_options,
+      '#default_value' => isset($type_options[$default_value]) ? $default_value : '',
+      '#weight' => -10,
+    );
+
+    // So we can give the user a nicer experience we need to hide the path field
+    // and auto-populate it in some cases.
+    // For this we make it optional and then handle required validation ourself.
+    $form['link_path']['#required'] = FALSE;
+
+    // Only show the path field if the user has selected normal menu item.
+    $form['link_path']['#states']['visible']['select[name="menu_item_type"]'] = array('value' => '');
+    // If the field is visibe add the required indicator.
+    $form['link_path']['#states']['required']['select[name="menu_item_type"]'] = array('value' => '');
+
+    // Add an anchor field for the anchor type.
+    $form['fragment'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Anchor'),
+      '#default_value' => isset($item['options']['fragment']) ? $item['options']['fragment'] : '',
+      '#weight' => -3,
+      '#description' => t('Enter the anchor without the leading #.'),
+      '#states' => array(
+        'visible' => array(
+          'select[name="menu_item_type"]' => array('value' => '<anchor>'),
+        ),
+        'required' => array(
+          'select[name="menu_item_type"]' => array('value' => '<anchor>'),
+        ),
+      ),
+    );
+
+    // Move the link title above the fragment.
+    $form['link_title']['#weight'] = -5;
+
+    // Add our validation function and run it first so that we get in early
+    // with the path field required check.
+    array_unshift($form['#validate'], 'special_menu_items_menu_edit_item_validate');
+  }
+}
+
+/**
+ * A custom validation handler for the menu item add/edit form.
+ */
+function special_menu_items_menu_edit_item_validate(&$form, &$form_state) {
+  if ($form_state['values']['menu_item_type']) {
+    // If menu item type is not a normal item set the path for the type.
+    form_set_value($form['link_path'], $form_state['values']['menu_item_type'], $form_state);
+    // Handle the anchor type.
+    if ($form_state['values']['menu_item_type'] == '<anchor>') {
+      if (!$form_state['values']['fragment']) {
+        if (isset($form['fragment']['#title'])) {
+          form_error($form['fragment'], t('!name field is required.', array('!name' => $form['fragment']['#title'])));
+        }
+        else {
+          form_error($form['fragment']);
+        }
+      }
+    }
+  }
+  else {
+    // We have a normal menu item so we have to make sure we have a path.
+    if (!$form_state['values']['link_path']) {
+      // Throw the error as per _form_validate().
+      if (isset($form['link_path']['#title'])) {
+        form_error($form['link_path'], t('!name field is required.', array('!name' => $form['link_path']['#title'])));
+      }
+      else {
+        form_error($form['link_path']);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_menu_link_alter().
+ */
+function special_menu_items_menu_link_alter(&$item) {
+  // If we are saving an anchor with a fragment, save the fragment properly.
+  if ($item['link_path'] == '<anchor>') {
+    if (isset($item['menu_item_type']) && $item['menu_item_type'] == '<anchor>') {
+      $item['options']['fragment'] = $item['fragment'];
+    }
+  }
+}
+
+/**
+ * Implementation of hook_init().
+ */
+function special_menu_items_init() {
+  // Make breadcrumb of nolink menu item nonlinkable.
+  $breadcrumb = drupal_get_breadcrumb();
+
+  foreach($breadcrumb as $key => $crumb){
+    if (strlen(strstr($crumb,'<nolink>')) > 0) {
+      $crumb = strip_tags($crumb);
+      $tag = variable_get('special_menu_items_nolink_tag', '<span>');
+      $breadcrumb[$key] = special_menu_items_render_menu_item($tag, $crumb);
+    }
+  }
+
+  drupal_set_breadcrumb($breadcrumb);
+}
+
+/**
+ * Special Menu Items admin settings form.
+ *
+ * @return
+ * The settings form used by Special Menu Items.
+ */
+function special_menu_items_admin_settings_form() {
+  $form['special_menu_items_nolink_tag'] = array(
+    '#type' => 'textfield',
+    '#title' => t('HTML tag for "nolink"'),
+    '#description' => t('By default, Special Menu Items will use a span tag for the nolink menu item. Here you can specify your own tag.'),
+    '#default_value' => variable_get('special_menu_items_nolink_tag', '<span>'),
+  );
+
+  $form['special_menu_items_separator_tag'] = array(
+    '#type' => 'textfield',
+    '#title' => t('HTML tag for "separator"'),
+    '#description' => t('By default, Special Menu Items will use a span tag for the separator menu item. Here you can specify your own tag.'),
+    '#default_value' => variable_get('special_menu_items_separator_tag', '<span>'),
+  );
+
+  $form['special_menu_items_separator_value'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Value to be displayed for the "separator"'),
+    '#description' => t('By default, Special Menu Items will use a "&lt;hr&gt;" value for the separator. You can specify your own value for the separator.'),
+    '#default_value' => variable_get('special_menu_items_separator_value', '<hr>'),
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Implements hook_menu_link_update()
+ *
+ */
+
+/*
+function special_menu_items_menu_link_update($link) {
+    //do all links in db
+    global $db_type;
+    if ($db_type == 'pgsql') {
+     db_query("UPDATE {menu_links} SET link_path=link_path||'/'||mlid WHERE (link_path='<nolink>' OR link_path='<separator>') AND hidden != -1");
+    }
+    else {
+     db_query("UPDATE {menu_links} SET link_path=CONCAT(CONCAT(link_path,'/'),mlid) WHERE (link_path='<nolink>' OR link_path='<separator>') AND hidden!=-1");
+    }
+}
+ *
+ */
