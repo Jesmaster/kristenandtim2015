@@ -14,7 +14,7 @@ function kristenandtim2015_preprocess_block(&$variables) {
 				'#suffix' => '</div>',
 			),
 			'menu' => array(
-				'#prefix' => '<div class="col-md-6 hidden-xs hidden-sm">',
+				'#prefix' => '<div class="col-md-6 hidden-xs hidden-sm text-center">',
 				'#suffix' => '</div>',
 				'#theme_wrappers' => array('menu_tree__main_menu'),
 			),
@@ -25,7 +25,7 @@ function kristenandtim2015_preprocess_block(&$variables) {
 			$element['#printed'] = FALSE;
 
 			if($element['#theme'] == 'menu_link__main_menu'){
-				$render['menu']['menu'] = $element;
+				$render['menu']['menu'][] = $element;
 			}
 			else{
 				$render['image']['image'] = $element;

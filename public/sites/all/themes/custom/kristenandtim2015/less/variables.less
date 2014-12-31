@@ -20,18 +20,20 @@
 @brand-warning:         #f0ad4e;
 @brand-danger:          #d9534f;
 
+@kt2015_brown:          #857d1e;
+@kt2015_white:          #ffffff;
 
 //== Scaffolding
 //
 //## Settings for some of the most global styles.
 
 //** Background color for `<body>`.
-@body-bg:               #fff;
+@body-bg:               @kt2015_brown;
 //** Global text color on `<body>`.
-@text-color:            @gray-dark;
+@text-color:            @kt2015_white;
 
 //** Global textual link color.
-@link-color:            @brand-primary;
+@link-color:            @kt2015_white;
 //** Link hover color set via `darken()` function.
 @link-hover-color:      darken(@link-color, 15%);
 //** Link hover decoration.
@@ -317,7 +319,7 @@
 @grid-gutter-width:         30px;
 // Navbar collapse
 //** Point at which the navbar becomes uncollapsed.
-@grid-float-breakpoint:     @screen-sm-min;
+@grid-float-breakpoint:     @screen-md-min;
 //** Point at which the navbar begins collapsing.
 @grid-float-breakpoint-max: (@grid-float-breakpoint - 1);
 
@@ -410,7 +412,7 @@
 
 //=== Shared nav styles
 @nav-link-padding:                          10px 15px;
-@nav-link-hover-bg:                         @gray-lighter;
+@nav-link-hover-bg:                         transparent;
 
 @nav-disabled-link-color:                   @gray-light;
 @nav-disabled-link-hover-color:             @gray-light;
