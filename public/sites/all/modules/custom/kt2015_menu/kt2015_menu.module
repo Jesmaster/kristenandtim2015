@@ -28,6 +28,7 @@ function kt2015_menu_form_submit($form, &$form_state){
 		$file->status = FILE_STATUS_PERMANENT;
 		$file->replace = FILE_EXISTS_REPLACE;
 		file_save($file);
+		file_usage_add($file, 'node', 'homepage', 1);
 
 		variable_set('kt2015_mm_image_fid', $form_state['values']['kt2015_mm_image_fid']);
 	}

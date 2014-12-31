@@ -20,6 +20,12 @@ function kristenandtim2015_preprocess_block(&$variables) {
 			),
 		);
 
+		if($variables['elements']['#block']->subject){
+			$render['menu']['#prefix'] .= '<h2 class="block-title">'.$variables['elements']['#block']->subject.'</h2>';
+			$variables['elements']['#block']->subject = '';
+		}
+		
+
 		foreach(element_children($variables['elements']) as $element){
 			$element = $variables['elements'][$element];
 			$element['#printed'] = FALSE;
