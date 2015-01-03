@@ -10,11 +10,11 @@ function kristenandtim2015_preprocess_block(&$variables) {
 			'#prefix' => '<div class="row">',
 			'#suffix' => '</div>',
 			'image' => array(
-				'#prefix' => '<div class="col-md-6">',
+				'#prefix' => '<div class="col-md-7">',
 				'#suffix' => '</div>',
 			),
 			'menu' => array(
-				'#prefix' => '<div class="col-md-6 hidden-xs hidden-sm text-center">',
+				'#prefix' => '<div class="col-md-5 hidden-xs hidden-sm text-center main-nav-wrapper">',
 				'#suffix' => '</div>',
 				'#theme_wrappers' => array('menu_tree__main_menu'),
 			),

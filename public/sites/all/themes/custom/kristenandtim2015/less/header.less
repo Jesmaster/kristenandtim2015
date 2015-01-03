@@ -1,5 +1,44 @@
 // Insert your styling here.
 
 #block-system-main-menu{
-	border:5px solid black;
+	border:27px solid black;
+	
+	border-style: solid;
+	border-width: 27px;
+	-moz-border-image: url('../images/nav-border.jpg') 27 repeat;
+	-webkit-border-image: url('../images/nav-border.jpg') 27 repeat;
+	-o-border-image: url('../images/nav-border.jpg') 27 repeat;
+	border-image: url('../images/nav-border.jpg') 27 repeat;
+
+	background-color: @kt2015_brown;
+	background-image: url('../images/bg-gold.jpg');
+	color:@kt2015_white;
+
+	a{
+		color:@kt2015_white;
+		text-transform: uppercase;
+		font-weight: bold;
+	}
+
+	.menu{
+		&:before,
+		&:after{
+			width:163px;
+			height:62px;
+			margin:0 auto;
+		}
+
+		&:before{
+			background-image:url('../images/nav-dec-top.png');
+			margin-top:10px;
+		}
+		&:after{
+			background-image:url('../images/nav-dec-bottom.png');
+			margin-bottom:10px;
+		}
+	}
+
+	.main-nav-wrapper{
+		margin-left:-15px;
+	}
 }
