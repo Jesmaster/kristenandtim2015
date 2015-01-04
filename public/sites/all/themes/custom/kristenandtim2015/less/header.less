@@ -1,4 +1,25 @@
-// Insert your styling here.
+.navbar-default{
+	background-image: url('../images/bg-gold.jpg');
+
+	.navbar-toggle{
+		background-color: @kt2015_white;
+	}
+
+	.navbar-nav{
+		> li{
+			> a{
+				color:@kt2015_white;
+				text-transform: uppercase;
+				font-weight: bold;
+
+				&:hover{
+					color:@kt2015_white;
+					text-decoration: underline;
+				}
+			}
+		}
+	}
+}
 
 #block-system-main-menu{
 	border:27px solid black;
@@ -10,7 +31,6 @@
 	-o-border-image: url('../images/nav-border.jpg') 27 repeat;
 	border-image: url('../images/nav-border.jpg') 27 repeat;
 
-	background-color: @kt2015_brown;
 	background-image: url('../images/bg-gold.jpg');
 	color:@kt2015_white;
 
@@ -18,27 +38,28 @@
 		color:@kt2015_white;
 		text-transform: uppercase;
 		font-weight: bold;
-	}
 
-	.menu{
-		&:before,
-		&:after{
-			width:163px;
-			height:62px;
-			margin:0 auto;
-		}
-
-		&:before{
-			background-image:url('../images/nav-dec-top.png');
-			margin-top:10px;
-		}
-		&:after{
-			background-image:url('../images/nav-dec-bottom.png');
-			margin-bottom:10px;
+		&:hover{
+			text-decoration: underline;
 		}
 	}
 
 	.main-nav-wrapper{
+		margin-top:10px;
+		margin-bottom:10px;
 		margin-left:-15px;
+
+		> img{
+			width:74%;
+			margin:0 auto;
+
+			@media (max-width:@screen-md-max){
+				width:63%;
+			}
+		}
+	}
+
+	.menu{
+		margin-top:15px;
 	}
 }

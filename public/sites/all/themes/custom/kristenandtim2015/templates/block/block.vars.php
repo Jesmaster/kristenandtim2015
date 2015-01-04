@@ -6,6 +6,13 @@
 function kristenandtim2015_preprocess_block(&$variables) {
 	if($variables['block_html_id'] == 'block-system-main-menu'){
 
+		$menu_prefix = '<div class="col-md-5 hidden-xs hidden-sm text-center main-nav-wrapper">';
+		$menu_prefix .= theme('image',array('path' => drupal_get_path('theme', 'kristenandtim2015').'/images/nav-dec-top.png'));
+		$menu_prefix .= theme('image',array('path' => drupal_get_path('theme', 'kristenandtim2015').'/images/nav-main.png'));
+
+		$menu_suffix = theme('image',array('path' => drupal_get_path('theme', 'kristenandtim2015').'/images/nav-dec-bottom.png'));
+		$menu_suffix .= '</div>';
+
 		$render = array(
 			'#prefix' => '<div class="row">',
 			'#suffix' => '</div>',
@@ -14,8 +21,8 @@ function kristenandtim2015_preprocess_block(&$variables) {
 				'#suffix' => '</div>',
 			),
 			'menu' => array(
-				'#prefix' => '<div class="col-md-5 hidden-xs hidden-sm text-center main-nav-wrapper">',
-				'#suffix' => '</div>',
+				'#prefix' => $menu_prefix,
+				'#suffix' => $menu_suffix,
 				'#theme_wrappers' => array('menu_tree__main_menu'),
 			),
 		);
