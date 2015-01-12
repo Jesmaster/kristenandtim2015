@@ -30,3 +30,10 @@ function kristenandtim2015_process_page(&$variables) {
 
   $variables['navbar_classes'] = implode(' ', $variables['navbar_classes_array']);
 }
+
+/**
+ * Implements template_preprocess_maintenance_page().
+ */
+function kristenandtim2015_preprocess_maintenance_page(&$variables){
+	$variables['content'] .= theme('image',array('path' => drupal_get_path('theme', 'kristenandtim2015').'/images/img-collage.jpg'));
+}
