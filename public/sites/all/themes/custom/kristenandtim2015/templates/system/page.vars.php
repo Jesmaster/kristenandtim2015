@@ -35,5 +35,8 @@ function kristenandtim2015_process_page(&$variables) {
  * Implements template_preprocess_maintenance_page().
  */
 function kristenandtim2015_preprocess_maintenance_page(&$variables){
+	$variables['title'] = 'Site Coming Soon!';
+
+	$variables['content'] = '<p>'.$variables['content'].'</p>';
 	$variables['content'] .= theme('image',array('path' => drupal_get_path('theme', 'kristenandtim2015').'/images/img-collage.jpg'));
 }
