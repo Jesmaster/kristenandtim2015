@@ -8,7 +8,7 @@ function kristenandtim2015_preprocess_block(&$variables) {
 
 		$menu_prefix = '<div class="col-md-5 hidden-xs hidden-sm text-center main-nav-wrapper">';
 		$menu_prefix .= theme('image',array('path' => drupal_get_path('theme', 'kristenandtim2015').'/images/nav-dec-top.png'));
-		$menu_prefix .= theme('image',array('path' => drupal_get_path('theme', 'kristenandtim2015').'/images/nav-main.png'));
+		$menu_prefix .= theme('image',array('path' => drupal_get_path('theme', 'kristenandtim2015').'/images/nav-main.png', 'attributes' => array('class' => array('main-nav-image'))));
 
 		$menu_suffix = theme('image',array('path' => drupal_get_path('theme', 'kristenandtim2015').'/images/nav-dec-bottom.png'));
 		$menu_suffix .= '</div>';
